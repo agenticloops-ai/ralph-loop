@@ -1,0 +1,16 @@
+## Session 1 — [Date]
+### Task: Project initialization
+- Installed dependencies: [list]
+- Configured TypeScript/linting/testing
+- Created basic directory structure
+- Files changed: package.json, tsconfig.json, src/index.ts
+- Decisions: Chose Vitest over Jest for speed
+- Status: Complete
+
+## Session 2 — [Date]
+### Task: [Task name]
+- [What was implemented]
+- Files changed: [list]
+- Decisions: [any architectural choices]
+- Issues found: [anything to note for future sessions]
+- Status: Complete

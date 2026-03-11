@@ -1,0 +1,46 @@
+{
+  "project": "Your Project Name",
+  "description": "One paragraph describing what this product does and who it's for.",
+  "tech_stack": {
+    "language": "TypeScript",
+    "framework": "Next.js",
+    "database": "PostgreSQL",
+    "testing": "Vitest",
+    "package_manager": "npm"
+  },
+  "phases": [
+    {
+      "name": "Phase 1: Foundation",
+      "tasks": [
+        { "id": "1.1", "description": "Project initialization (install dependencies, configure tooling)", "done": false },
+        { "id": "1.2", "description": "Basic project structure and entry point", "done": false },
+        { "id": "1.3", "description": "Database schema and connection setup", "done": false },
+        { "id": "1.4", "description": "Core data models", "done": false }
+      ]
+    },
+    {
+      "name": "Phase 2: Core Features",
+      "tasks": [
+        { "id": "2.1", "description": "Feature 1: description and acceptance criteria", "done": false },
+        { "id": "2.2", "description": "Feature 2: description and acceptance criteria", "done": false },
+        { "id": "2.3", "description": "Feature 3: description and acceptance criteria", "done": false }
+      ]
+    },
+    {
+      "name": "Phase 3: Integration & Polish",
+      "tasks": [
+        { "id": "3.1", "description": "API endpoint integration tests", "done": false },
+        { "id": "3.2", "description": "Error handling and validation", "done": false },
+        { "id": "3.3", "description": "Logging and observability", "done": false },
+        { "id": "3.4", "description": "Documentation", "done": false }
+      ]
+    }
+  ],
+  "bugs": [],
+  "completion_criteria": [
+    "All tasks done",
+    "All tests passing",
+    "No open bugs"
+  ],
+  "task_guidelines": "Each task should be one logical concern, completable in one session (~100-400 lines changed). If a task combines multiple concerns, split it. Successive phases should not contradict each other aesthetically or architecturally."
+}
