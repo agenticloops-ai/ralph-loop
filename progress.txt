@@ -1,0 +1,6 @@
+## Session — 2026-03-20 — Integrate superpower skills and improve visual look
+
+- Added 4 new prompt skills: refactor, docs, perf, security
+- Improved terminal output with box-drawing banners, unicode symbols, color-coded tool indicators, and session stats
+- Updated all scripts (ralph-once, ralph-loop, ralph-sandbox, stream-format) with consistent "skill" terminology
+- Updated README with skills table and new prompt documentation

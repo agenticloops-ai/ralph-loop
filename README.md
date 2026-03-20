@@ -70,14 +70,18 @@ Start with human-in-the-loop to watch Ralph work and tune your prompts:
 .ralph/ralph-once.sh
 ```
 
-This runs a single iteration using the `implement` prompt. You can specify a different prompt:
+This runs a single iteration using the `implement` skill. You can specify a different skill:
 
 ```bash
-.ralph/ralph-once.sh test     # test coverage iteration
-.ralph/ralph-once.sh review   # code review iteration
+.ralph/ralph-once.sh test       # test coverage iteration
+.ralph/ralph-once.sh review     # code review iteration
+.ralph/ralph-once.sh refactor   # refactoring iteration
+.ralph/ralph-once.sh perf       # performance optimization iteration
+.ralph/ralph-once.sh security   # security audit iteration
+.ralph/ralph-once.sh docs       # documentation iteration
 ```
 
-Review the output. If Ralph goes off track, refine the prompt in `.ralph/prompts/implement.md` and run again. **This tuning phase is critical** — there are no perfect prompts, only prompts refined through observation.
+Review the output. If Ralph goes off track, refine the skill prompt in `.ralph/prompts/implement.md` and run again. **This tuning phase is critical** — there are no perfect prompts, only prompts refined through observation.
 
 ### 4. Run Ralph (AFK Mode)
 
@@ -103,9 +107,13 @@ The loop exits early if Ralph outputs `<promise>COMPLETE</promise>` (all PRD tas
 │   └── CLAUDE.md              # Claude Code project instructions
 ├── .ralph/
 │   ├── prompts/
-│   │   ├── implement.md       # Feature implementation prompt
-│   │   ├── test.md            # Test coverage prompt
-│   │   └── review.md          # Code review prompt
+│   │   ├── implement.md       # Feature implementation skill
+│   │   ├── test.md            # Test coverage skill
+│   │   ├── review.md          # Code review skill
+│   │   ├── refactor.md        # Code refactoring skill
+│   │   ├── docs.md            # Documentation skill
+│   │   ├── perf.md            # Performance optimization skill
+│   │   └── security.md        # Security audit skill
 │   ├── templates/
 │   │   ├── prd.example.json    # Example PRD format
 │   │   └── progress.example.txt
@@ -167,24 +175,30 @@ Tips:
 - Order tasks so dependencies come first
 - If a task feels too big, split it into subtasks
 
-### Customizing Prompts
+### Skills
 
-All prompts live in `.ralph/prompts/`. The three included prompts cover the most common loops:
+All skills live in `.ralph/prompts/`. Ralph ships with seven built-in skills:
 
-- **`implement.md`** — Pick a task, build it, test it, commit
-- **`test.md`** — Find untested code, write tests, commit
-- **`review.md`** — Find issues, log them in prd.json `bugs` array, fix one, commit
+| Skill | Command | What it does |
+|-------|---------|-------------|
+| **implement** | `.ralph/ralph-once.sh` | Pick a task, build it, test it, commit |
+| **test** | `.ralph/ralph-once.sh test` | Find untested code, write tests, commit |
+| **review** | `.ralph/ralph-once.sh review` | Find bugs, log in prd.json, fix one, commit |
+| **refactor** | `.ralph/ralph-once.sh refactor` | Restructure code for clarity, extract duplication |
+| **docs** | `.ralph/ralph-once.sh docs` | Add docstrings and inline docs to undocumented code |
+| **perf** | `.ralph/ralph-once.sh perf` | Profile, benchmark, and optimize bottlenecks |
+| **security** | `.ralph/ralph-once.sh security` | Audit for vulnerabilities, fix with regression tests |
 
-Create new prompts for specialized loops:
+Create custom skills for specialized loops:
 
 ```bash
-# Example: a prompt that only fixes linting errors
+# Example: a skill that only fixes linting errors
 cp .ralph/prompts/implement.md .ralph/prompts/lint.md
 # Edit lint.md with your linting-specific instructions
 .ralph/ralph-loop.sh 5 lint
 ```
 
-The loop is always the same — only the prompt changes.
+The loop is always the same — only the skill changes.
 
 ### Recovery
 
@@ -217,7 +231,7 @@ git log --oneline
 
 - **Start small.** Get one task working end-to-end before scaling up iterations.
 - **JSON PRDs are more robust** than markdown for large task lists (model is less likely to corrupt structured JSON).
-- **Tune prompts in HITL mode.** Watch what Ralph does wrong and add explicit instructions to prevent it. Failures become prompt refinements.
+- **Tune skill prompts in HITL mode.** Watch what Ralph does wrong and add explicit instructions to prevent it. Failures become prompt refinements.
 - **Keep tasks atomic.** A task that takes 3+ iterations is too big — split it.
 - **Use Docker sandbox for AFK.** Prevents accidental system changes when you're not watching.
 - **Review after AFK runs.** Always check `git log`, `progress.txt`, and run tests after unattended loops.
