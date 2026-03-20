@@ -10,19 +10,61 @@ set -uo pipefail
 
 RESULT_FILE="${1:-}"
 FULL_TEXT=""
+TOOL_COUNT=0
+ERROR_COUNT=0
+START_TIME=$(date +%s)
 
-# Colors (only if terminal supports them)
+# Colors and symbols (only if terminal supports them)
 if [ -t 2 ]; then
   DIM='\033[2m'
   CYAN='\033[36m'
   GREEN='\033[32m'
   YELLOW='\033[33m'
   RED='\033[31m'
+  BLUE='\033[34m'
+  MAGENTA='\033[35m'
   BOLD='\033[1m'
+  ITALIC='\033[3m'
   RESET='\033[0m'
+  # Symbols
+  SYM_READ="  "
+  SYM_EDIT="  "
+  SYM_WRITE=" "
+  SYM_BASH=" $"
+  SYM_GLOB="  "
+  SYM_GREP="  "
+  SYM_AGENT="  "
+  SYM_OK="  ✓"
+  SYM_FAIL="  ✗"
+  SYM_DONE="  ✔"
+  SYM_WARN="  ⚠"
 else
-  DIM='' CYAN='' GREEN='' YELLOW='' RED='' BOLD='' RESET=''
+  DIM='' CYAN='' GREEN='' YELLOW='' RED='' BLUE='' MAGENTA='' BOLD='' ITALIC='' RESET=''
+  SYM_READ="  Read"
+  SYM_EDIT="  Edit"
+  SYM_WRITE="  Write"
+  SYM_BASH="  Bash"
+  SYM_GLOB="  Glob"
+  SYM_GREP="  Grep"
+  SYM_AGENT="  Agent"
+  SYM_OK="  ok"
+  SYM_FAIL="  x failed"
+  SYM_DONE="  Done"
+  SYM_WARN="  Warning"
 fi
+
+# Shorten file paths for display (show last 2 components)
+shorten_path() {
+  local path="$1"
+  local parts
+  IFS='/' read -ra parts <<< "$path"
+  local len=${#parts[@]}
+  if [ "$len" -le 2 ]; then
+    echo "$path"
+  else
+    echo "…/${parts[$((len-2))]}/${parts[$((len-1))]}"
+  fi
+}
 
 while IFS= read -r line; do
   # Skip empty lines
@@ -37,7 +79,8 @@ while IFS= read -r line; do
       subtype=$(echo "$line" | jq -r '.subtype // empty' 2>/dev/null)
       if [ "$subtype" = "init" ]; then
         session_id=$(echo "$line" | jq -r '.session_id // "unknown"' 2>/dev/null)
-        echo -e "${DIM}Session: ${session_id}${RESET}" >&2
+        echo -e "${DIM}┌ Session: ${session_id}${RESET}" >&2
+        echo -e "${DIM}│${RESET}" >&2
       fi
       ;;
 
@@ -57,46 +100,53 @@ while IFS= read -r line; do
             ;;
 
           tool_use)
+            TOOL_COUNT=$((TOOL_COUNT + 1))
             tool_name=$(echo "$line" | jq -r ".message.content[$j].name // \"unknown\"" 2>/dev/null)
             # Extract key argument based on tool type
             case "$tool_name" in
               Read)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.file_path // empty" 2>/dev/null)
-                echo -e "  ${CYAN}Read${RESET} ${DIM}${arg}${RESET}" >&2
+                short=$(shorten_path "$arg")
+                echo -e "${DIM}│${RESET} ${CYAN}${SYM_READ}${RESET} ${DIM}${short}${RESET}" >&2
                 ;;
               Edit)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.file_path // empty" 2>/dev/null)
-                echo -e "  ${YELLOW}Edit${RESET} ${DIM}${arg}${RESET}" >&2
+                short=$(shorten_path "$arg")
+                echo -e "${DIM}│${RESET} ${YELLOW}${SYM_EDIT}${RESET} ${DIM}${short}${RESET}" >&2
                 ;;
               Write)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.file_path // empty" 2>/dev/null)
-                echo -e "  ${GREEN}Write${RESET} ${DIM}${arg}${RESET}" >&2
+                short=$(shorten_path "$arg")
+                echo -e "${DIM}│${RESET} ${GREEN}${SYM_WRITE}${RESET} ${DIM}${short}${RESET}" >&2
                 ;;
               Bash)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.command // empty" 2>/dev/null)
                 # Truncate long commands
-                if [ ${#arg} -gt 80 ]; then
-                  arg="${arg:0:77}..."
+                if [ ${#arg} -gt 60 ]; then
+                  arg="${arg:0:57}..."
                 fi
-                echo -e "  ${BOLD}Bash${RESET} ${DIM}${arg}${RESET}" >&2
+                echo -e "${DIM}│${RESET} ${BOLD}${SYM_BASH}${RESET} ${DIM}${arg}${RESET}" >&2
                 ;;
               Glob)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.pattern // empty" 2>/dev/null)
-                echo -e "  ${DIM}Glob${RESET} ${DIM}${arg}${RESET}" >&2
+                echo -e "${DIM}│${RESET} ${MAGENTA}${SYM_GLOB}${RESET} ${DIM}${arg}${RESET}" >&2
                 ;;
               Grep)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.pattern // empty" 2>/dev/null)
-                echo -e "  ${DIM}Grep${RESET} ${DIM}${arg}${RESET}" >&2
+                echo -e "${DIM}│${RESET} ${MAGENTA}${SYM_GREP}${RESET} ${DIM}${arg}${RESET}" >&2
                 ;;
               Agent)
                 arg=$(echo "$line" | jq -r ".message.content[$j].input.prompt // empty" 2>/dev/null)
-                if [ ${#arg} -gt 80 ]; then
-                  arg="${arg:0:77}..."
+                if [ ${#arg} -gt 60 ]; then
+                  arg="${arg:0:57}..."
                 fi
-                echo -e "  ${CYAN}Agent${RESET} ${DIM}${arg}${RESET}" >&2
+                echo -e "${DIM}│${RESET} ${BLUE}${SYM_AGENT}${RESET} ${DIM}${arg}${RESET}" >&2
+                ;;
+              TodoWrite)
+                echo -e "${DIM}│${RESET} ${DIM}  ☐ TodoWrite${RESET}" >&2
                 ;;
               *)
-                echo -e "  ${DIM}${tool_name}${RESET}" >&2
+                echo -e "${DIM}│${RESET} ${DIM}  ${tool_name}${RESET}" >&2
                 ;;
             esac
             ;;
@@ -112,9 +162,10 @@ while IFS= read -r line; do
         if [ "$block_type" = "tool_result" ]; then
           is_error=$(echo "$line" | jq -r ".message.content[$j].is_error // false" 2>/dev/null)
           if [ "$is_error" = "true" ]; then
-            echo -e "  ${RED}  x failed${RESET}" >&2
+            ERROR_COUNT=$((ERROR_COUNT + 1))
+            echo -e "${DIM}│${RESET} ${RED}${SYM_FAIL}${RESET}" >&2
           else
-            echo -e "  ${GREEN}  ok${RESET}" >&2
+            echo -e "${DIM}│${RESET} ${GREEN}${SYM_OK}${RESET}" >&2
           fi
         fi
       done
@@ -126,28 +177,33 @@ while IFS= read -r line; do
       turns=$(echo "$line" | jq -r '.num_turns // empty' 2>/dev/null)
       duration=$(echo "$line" | jq -r '.duration_ms // empty' 2>/dev/null)
 
-      echo "" >&2
+      echo -e "${DIM}│${RESET}" >&2
+
       if [ "$subtype" = "success" ]; then
-        echo -e "${GREEN}Done.${RESET}" >&2
+        echo -e "${DIM}└─${RESET} ${GREEN}${BOLD}${SYM_DONE} Done${RESET}" >&2
       else
-        echo -e "${RED}Finished with status: ${subtype}${RESET}" >&2
+        echo -e "${DIM}└─${RESET} ${RED}${BOLD}${SYM_WARN} Finished with status: ${subtype}${RESET}" >&2
       fi
 
-      # Print stats if available
+      # Build stats line
       stats=""
-      if [ -n "$turns" ]; then stats="${stats}${turns} turns"; fi
+      if [ -n "$turns" ]; then stats="${turns} turns"; fi
       if [ -n "$cost" ]; then
-        [ -n "$stats" ] && stats="${stats}, "
+        [ -n "$stats" ] && stats="${stats}  ·  "
         stats="${stats}\$${cost}"
       fi
       if [ -n "$duration" ]; then
-        [ -n "$stats" ] && stats="${stats}, "
-        # Convert ms to seconds
+        [ -n "$stats" ] && stats="${stats}  ·  "
         secs=$(echo "scale=1; $duration / 1000" | bc 2>/dev/null || echo "${duration}ms")
         stats="${stats}${secs}s"
       fi
+      stats="${stats}  ·  ${TOOL_COUNT} tool calls"
+      if [ "$ERROR_COUNT" -gt 0 ]; then
+        stats="${stats}  ·  ${ERROR_COUNT} errors"
+      fi
+
       if [ -n "$stats" ]; then
-        echo -e "${DIM}${stats}${RESET}" >&2
+        echo -e "   ${DIM}${stats}${RESET}" >&2
       fi
       ;;
   esac
