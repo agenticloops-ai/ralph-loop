@@ -35,11 +35,11 @@ The key constraint: **one task per iteration**. This keeps context focused and c
 .ralph/ralph-init.sh
 ```
 
-Interactively generates `.ralph/prd.json` and `.claude/CLAUDE.md` for your project. Skip this and configure manually if you prefer.
+Interactively generates `prd.json` and `.claude/CLAUDE.md` for your project. Skip this and configure manually if you prefer.
 
 ### 1. Define Your Product
 
-Edit `.ralph/prd.json` with your requirements. Use the template at `.ralph/templates/prd.example.json` as a reference.
+Edit `prd.json` with your requirements. Use the template at `.ralph/templates/prd.example.json` as a reference.
 
 ```json
 {
@@ -58,7 +58,7 @@ Write tasks that are **specific and scoped** — each should be completable in a
 
 Update two files:
 
-**`.ralph/prd.json`** — Add your tech stack in the `tech_stack` object so Ralph knows what tools to use.
+**`prd.json`** — Add your tech stack in the `tech_stack` object so Ralph knows what tools to use.
 
 **`.claude/CLAUDE.md`** — Update the Tech Stack section. Add any project-specific conventions (naming, patterns, libraries to prefer/avoid).
 
@@ -101,7 +101,7 @@ The loop exits early if Ralph outputs `<promise>COMPLETE</promise>` (all PRD tas
 .
 ├── .claude/
 │   └── CLAUDE.md              # Claude Code project instructions
-├── .ralph/
+├── .ralph/                    # Reusable tooling (scripts, prompts, templates)
 │   ├── prompts/
 │   │   ├── implement.md       # Feature implementation prompt
 │   │   ├── test.md            # Test coverage prompt
@@ -109,13 +109,13 @@ The loop exits early if Ralph outputs `<promise>COMPLETE</promise>` (all PRD tas
 │   ├── templates/
 │   │   ├── prd.example.json   # Example PRD format
 │   │   └── progress.example.txt
-│   ├── prd.json               # Product requirements (your tasks)
-│   ├── progress.txt           # Session-by-session progress log
 │   ├── ralph-init.sh          # Setup wizard
 │   ├── ralph-once.sh          # HITL: single iteration
 │   ├── ralph-loop.sh          # AFK: autonomous loop
 │   ├── ralph-sandbox.sh       # AFK: loop in Docker sandbox
 │   └── stream-format.sh       # Stream output formatter
+├── prd.json                   # Product requirements (your tasks)
+├── progress.txt               # Session-by-session progress log
 ├── src/                       # Application source code
 ├── tests/                     # Test files
 └── .gitignore
@@ -125,8 +125,8 @@ The loop exits early if Ralph outputs `<promise>COMPLETE</promise>` (all PRD tas
 
 | File | Purpose | Who writes it |
 |------|---------|---------------|
-| `.ralph/prd.json` | Tasks, bugs, and requirements | You (Ralph marks tasks done) |
-| `.ralph/progress.txt` | What was done each session | Ralph |
+| `prd.json` | Tasks, bugs, and requirements (project-specific) | You (Ralph marks tasks done) |
+| `progress.txt` | What was done each session (project-specific) | Ralph |
 | `.claude/CLAUDE.md` | Rules Ralph follows every session | You |
 
 ## Development Workflow
@@ -134,7 +134,7 @@ The loop exits early if Ralph outputs `<promise>COMPLETE</promise>` (all PRD tas
 ### Recommended Sequence
 
 ```
-1. Define PRD          →  .ralph/prd.json
+1. Define PRD          →  prd.json (project root)
 2. HITL iterations     →  .ralph/ralph-once.sh        (tune prompts, build foundation)
 3. AFK iterations      →  .ralph/ralph-loop.sh 10     (let Ralph build features)
 4. Review + test loop  →  .ralph/ralph-once.sh review (find issues)
@@ -175,7 +175,7 @@ All prompts live in `.ralph/prompts/`. The three included prompts cover the most
 
 - **`implement.md`** — Pick a task, build it, test it, commit
 - **`test.md`** — Find untested code, write tests, commit
-- **`review.md`** — Find issues, log them in `.ralph/prd.json` `bugs` array, fix one, commit
+- **`review.md`** — Find issues, log them in `prd.json` `bugs` array, fix one, commit
 
 Create new prompts for specialized loops:
 
@@ -203,13 +203,13 @@ Every iteration creates a commit, so you always have rollback points.
 
 ```bash
 # What has Ralph done?
-cat .ralph/progress.txt
+cat progress.txt
 
 # What's left?
-python3 -c "import json; [print(f\"{t['id']}: {t['description']}\") for p in json.load(open('.ralph/prd.json'))['phases'] for t in p['tasks'] if not t['done']]"
+python3 -c "import json; [print(f\"{t['id']}: {t['description']}\") for p in json.load(open('prd.json'))['phases'] for t in p['tasks'] if not t['done']]"
 
 # Any known bugs?
-python3 -c "import json; [print(f\"{b['id']}: [{b['priority']}] {b['description']}\") for b in json.load(open('.ralph/prd.json')).get('bugs',[]) if not b.get('fixed')]"
+python3 -c "import json; [print(f\"{b['id']}: [{b['priority']}] {b['description']}\") for b in json.load(open('prd.json')).get('bugs',[]) if not b.get('fixed')]"
 
 # Git history
 git log --oneline
@@ -222,5 +222,5 @@ git log --oneline
 - **Tune prompts in HITL mode.** Watch what Ralph does wrong and add explicit instructions to prevent it. Failures become prompt refinements.
 - **Keep tasks atomic.** A task that takes 3+ iterations is too big — split it.
 - **Use Docker sandbox for AFK.** Prevents accidental system changes when you're not watching.
-- **Review after AFK runs.** Always check `git log`, `.ralph/progress.txt`, and run tests after unattended loops.
+- **Review after AFK runs.** Always check `git log`, `progress.txt`, and run tests after unattended loops.
 - **Context rot is real.** If quality degrades in later iterations, the tasks may be too complex. Break them down further.

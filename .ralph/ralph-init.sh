@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Ralph Setup Wizard — Interactive project initialization
-# Generates .ralph/prd.json, .claude/CLAUDE.md, and .ralph/progress.txt
+# Generates prd.json, .claude/CLAUDE.md, and progress.txt
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -87,10 +87,10 @@ has_real_content() {
   return 1
 }
 
-if has_real_content ".ralph/prd.json" '"project": "TBD"'; then
-  OVERWRITE_FILES+=(".ralph/prd.json")
+if has_real_content "prd.json" '"project": "TBD"'; then
+  OVERWRITE_FILES+=("prd.json")
 fi
-if has_real_content ".claude/CLAUDE.md" "TBD — see .ralph/prd.json"; then
+if has_real_content ".claude/CLAUDE.md" "TBD — see prd.json"; then
   OVERWRITE_FILES+=(".claude/CLAUDE.md")
 fi
 if [ ${#OVERWRITE_FILES[@]} -gt 0 ]; then
@@ -106,8 +106,8 @@ if [ ${#OVERWRITE_FILES[@]} -gt 0 ]; then
   echo ""
 fi
 
-if [ -f ".ralph/progress.txt" ] && [ -s ".ralph/progress.txt" ]; then
-  printf "${RED}WARNING: .ralph/progress.txt has content. Re-running the wizard will reset it.${RESET}\n"
+if [ -f "progress.txt" ] && [ -s "progress.txt" ]; then
+  printf "${RED}WARNING: progress.txt has content. Re-running the wizard will reset it.${RESET}\n"
   if ! confirm "Continue and reset progress.txt?"; then
     echo "Aborted. No files were modified."
     exit 0
@@ -134,9 +134,9 @@ printf "  Project:     ${BOLD}%s${RESET}\n" "$PROJECT_NAME"
 printf "  Description: %s\n" "$PROJECT_DESC"
 echo ""
 printf "${DIM}Files to generate:${RESET}\n"
-printf "  - .ralph/prd.json\n"
+printf "  - prd.json\n"
 printf "  - .claude/CLAUDE.md\n"
-printf "  - .ralph/progress.txt (reset)\n"
+printf "  - progress.txt (reset)\n"
 echo ""
 
 if ! confirm "Generate files with these settings?" "y"; then
@@ -153,7 +153,7 @@ echo ""
 ESCAPED_NAME=$(json_escape "$PROJECT_NAME")
 ESCAPED_DESC=$(json_escape "$PROJECT_DESC")
 
-cat > "$PROJECT_DIR/.ralph/prd.json" << PRDEOF
+cat > "$PROJECT_DIR/prd.json" << PRDEOF
 {
   "project": "${ESCAPED_NAME}",
   "description": "${ESCAPED_DESC}",
@@ -196,7 +196,7 @@ cat > "$PROJECT_DIR/.ralph/prd.json" << PRDEOF
 }
 PRDEOF
 
-printf "${GREEN}  Created .ralph/prd.json${RESET}\n"
+printf "${GREEN}  Created prd.json${RESET}\n"
 
 # ============================================================================
 # Generate .claude/CLAUDE.md
@@ -208,7 +208,7 @@ cat > "$PROJECT_DIR/.claude/CLAUDE.md" << 'CLAUDEEOF'
 ## Overview
 
 This project uses the Ralph Wiggum Loop pattern for agentic development with Claude Code.
-Product requirements are defined in `.ralph/prd.json`. Progress is tracked in `.ralph/progress.txt`.
+Product requirements are defined in `prd.json`. Progress is tracked in `progress.txt`.
 
 ## Session Startup Protocol
 
@@ -216,8 +216,8 @@ Every session MUST follow this sequence:
 
 1. Run `pwd` to confirm working directory
 2. Review `git log --oneline -10` for recent changes
-3. Read `.ralph/progress.txt` for completed work and known issues
-4. Read `.ralph/prd.json` and identify the highest-priority incomplete task (first task with `"done": false`)
+3. Read `progress.txt` for completed work and known issues
+4. Read `prd.json` and identify the highest-priority incomplete task (first task with `"done": false`)
 5. Only then begin implementation work
 
 ## Development Rules
@@ -235,19 +235,19 @@ Every session MUST follow this sequence:
 - Follow existing code patterns and conventions in the codebase
 
 ### Progress Tracking
-- **Prepend** new entries to `.ralph/progress.txt` (newest first) so the most relevant context is always at the top
+- **Prepend** new entries to `progress.txt` (newest first) so the most relevant context is always at the top
 - **10-line max per session:** task ID, 1-3 bullets of what was done, key decisions, blockers — no exhaustive file lists
-- **200-line cap:** if `.ralph/progress.txt` exceeds 200 lines, keep the first 50 lines (recent) + last 10 lines (origin), remove the middle
-- Update `.ralph/prd.json` to mark the completed task (set `"done": true`). Preserve valid JSON.
+- **200-line cap:** if `progress.txt` exceeds 200 lines, keep the first 50 lines (recent) + last 10 lines (origin), remove the middle
+- Update `prd.json` to mark the completed task (set `"done": true`). Preserve valid JSON.
 - Commit with a descriptive message
 
 ### Safety
-- Never overwrite or delete `.ralph/progress.txt`
-- Never modify `.ralph/prd.json` structure — only update task `"done"` status
-- When editing `.ralph/prd.json`, preserve valid JSON — do not corrupt the file
+- Never overwrite or delete `progress.txt`
+- Never modify `prd.json` structure — only update task `"done"` status
+- When editing `prd.json`, preserve valid JSON — do not corrupt the file
 - Always search codebase before implementing (don't assume something doesn't exist)
 - DO NOT implement placeholder or stub implementations — write full, working code
-- If a task is too large for one session, add subtask entries to the phase in `.ralph/prd.json`
+- If a task is too large for one session, add subtask entries to the phase in `prd.json`
 
 ### Git Discipline
 - Make atomic commits (one logical change per commit)
@@ -258,14 +258,13 @@ Every session MUST follow this sequence:
 ## Tech Stack
 
 <!-- Define your tech stack here when requirements are set -->
-TBD — see .ralph/prd.json
+TBD — see prd.json
 
 ## File Map
 
-- `.ralph/prd.json` — Product requirements document (source of truth for tasks and bugs, JSON format)
-- `.ralph/progress.txt` — Session-by-session progress log
-- `.ralph/prompts/` — Prompt templates for different loop modes
-- `.ralph/*.sh` — Ralph loop scripts (init, once, loop, sandbox)
+- `prd.json` — Product requirements document (source of truth for tasks and bugs, JSON format)
+- `progress.txt` — Session-by-session progress log
+- `.ralph/` — Ralph loop scripts, prompts, and templates (reusable tooling)
 - `.claude/CLAUDE.md` — Project instructions for Claude Code
 - `src/` — Application source code
 - `tests/` — Test files
@@ -277,8 +276,8 @@ printf "${GREEN}  Created .claude/CLAUDE.md${RESET}\n"
 # Reset progress.txt
 # ============================================================================
 
-: > "$PROJECT_DIR/.ralph/progress.txt"
-printf "${GREEN}  Reset .ralph/progress.txt${RESET}\n"
+: > "$PROJECT_DIR/progress.txt"
+printf "${GREEN}  Reset progress.txt${RESET}\n"
 
 # ============================================================================
 # Remove old prd.md if present (migrated to prd.json)
@@ -316,7 +315,7 @@ if [ -f "$PROJECT_DIR/README.md" ]; then
 .ralph/ralph-init.sh
 ```
 
-Interactively generates `.ralph/prd.json` and `.claude/CLAUDE.md` for your project. Skip this and configure manually if you prefer.
+Interactively generates `prd.json` and `.claude/CLAUDE.md` for your project. Skip this and configure manually if you prefer.
 
 WIZARDEOF
       fi
@@ -337,11 +336,11 @@ echo ""
 printf "${BOLD}=== Setup Complete ===${RESET}\n"
 echo ""
 printf "Generated files:\n"
-printf "  .ralph/prd.json      — PRD with Phase 1 bootstrap tasks\n"
+printf "  prd.json      — PRD with Phase 1 bootstrap tasks\n"
 printf "  .claude/CLAUDE.md    — Project instructions\n"
-printf "  .ralph/progress.txt  — Reset (empty)\n"
+printf "  progress.txt  — Reset (empty)\n"
 echo ""
 printf "${BOLD}Next steps:${RESET}\n"
-printf "  1. Edit .ralph/prd.json — define your tech stack and Phase 2/3 tasks\n"
+printf "  1. Edit prd.json — define your tech stack and Phase 2/3 tasks\n"
 printf "  2. Run ${CYAN}.ralph/ralph-once.sh${RESET} to start the first Ralph iteration\n"
 echo ""

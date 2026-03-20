@@ -48,4 +48,4 @@ for ((i=1; i<=ITERATIONS; i++)); do
   fi
 done
 
-echo "=== Reached max iterations ($ITERATIONS). Review .ralph/progress.txt for status. ==="
+echo "=== Reached max iterations ($ITERATIONS). Review progress.txt for status. ==="
